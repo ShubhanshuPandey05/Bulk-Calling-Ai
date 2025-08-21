@@ -12,7 +12,7 @@ const upload = multer();
 async function generateSummary(responseData, convertions) {
 
 	let categoriesList = convertions;
-	let prompt = `Classify the user's response into ONE of the following categories: ${categoriesList}. Return only the single label. Conversation:\n\n${responseData}`
+	let prompt = `Classify the user's response into ONE of the following categories: ${categoriesList}. Conversation:\n\n${responseData}`
     console.log("prompt", prompt)
 
 	const createResponseParams = {
@@ -31,7 +31,7 @@ async function generateSummary(responseData, convertions) {
 		text = response.output[0].content[0].text;
 	}
 
-	return (text || "Sorry I cannot conclude from the given conversation").trim().split(/\s+/)[0];
+	return (text || "Sorry I cannot conclude from the given conversation").trim().split(/\s+/);
 }
 
 let UserResponse = [];
