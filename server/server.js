@@ -72,12 +72,7 @@ app.post("/bulk-call", upload.single('csvFile'), async (req, res) => {
                 name, prompt, to: phone, from: process.env.TWILIO_PHONE_NO, twilio_sid: process.env.TWILIO_ACCOUNT_SID, twilio_token: process.env.TWILIO_AUTH_TOKEN, recall_url
             	})
         	})
-			if (!response.ok) {
-				const text = await response.text().catch(() => "");
-				// console.error("Downstream /call failed", response.status, text);
-				continue;
-			}
-        	const responseData = await response.json();
+            continue;
         	// console.log(responseData)
         } catch (err) {
 			// console.error("Fetch to /call failed", err);
