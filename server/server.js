@@ -88,10 +88,10 @@ app.post("/bulk-call", upload.single('csvFile'), async (req, res) => {
 })
 
 app.post('/response', async (req, res) => {
-    const { phone, conversations } = req.body;
-    console.log("conversations",conversations)
+    const { phone, conversation } = req.body;
+    console.log("conversations",conversation)
     try {
-    	const summary = await generateSummary(conversations, DefinedResponse);
+    	const summary = await generateSummary(conversation, DefinedResponse);
     	UserResponse.push(`${phone} : ${summary}`);
     	console.log(UserResponse)
     	res.status(201).json({"message":"Added the user response"})
