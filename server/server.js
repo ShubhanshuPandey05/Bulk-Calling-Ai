@@ -2,8 +2,7 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 require("dotenv").config();
-const services = require('./services/services.js')
-const twilio = require('twilio')
+const {services} = require('./services/services.js')
 
 async function generateSummary(responseData, convertions) {
 
@@ -25,6 +24,7 @@ async function generateSummary(responseData, convertions) {
     return assistantMessage.content[0].text || "Sorry I cannot conclude from the given conversation";
 }
 
+// console.log(process.env.OPEN_AI)
 
 let UserResponse = [];
 let DefinedResponse = [];
