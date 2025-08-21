@@ -6,6 +6,8 @@ app.use(bodyParser.json());
 require("dotenv").config();
 const {services} = require('./services/services.js')
 const fs = require("fs");
+const multer = require('multer');
+const upload = multer();
 
 async function generateSummary(responseData, convertions) {
 
@@ -34,12 +36,19 @@ async function generateSummary(responseData, convertions) {
 let UserResponse = [];
 let DefinedResponse = [];
 let recall_url = process.env.recall_url;
-app.post("/bulk-call", async (req, res) => {
-    const { name, channel, prompt, csvFile, convertions } = req.body;
+app.post("/bulk-call", upload.single('csvFile'), async (req, res) => {
+    const { name, channel, prompt, csvFile, convertions } = req.body || {};
     console.log(name, channel, prompt, csvFile, convertions);
-    DefinedResponse = convertions
+    DefinedResponse = Array.isArray(convertions) ? convertions : (convertions ? [convertions] : []);
 
-    const csvData = fs.readFileSync(csvFile, "utf8");
+    let csvData;
+    if (req.file && req.file.buffer) {
+    	csvData = req.file.buffer.toString("utf8");
+    } else if (csvFile) {
+    	csvData = fs.readFileSync(csvFile, "utf8");
+    } else {
+    	return res.status(400).json({ error: "Provide csvFile path or upload csvFile as form-data file" });
+    }
     const rows = csvData.trim().split(/\r?\n/);
     const headers = rows[0].split(",").map(h => h.trim());
     const data = rows.slice(1).filter(Boolean).map(row => {
