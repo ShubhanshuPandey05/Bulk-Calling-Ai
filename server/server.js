@@ -38,7 +38,7 @@ let DefinedResponse = [];
 let recall_url = process.env.recall_url;
 app.post("/bulk-call", upload.single('csvFile'), async (req, res) => {
     const { name, channel, prompt, csvFile, convertions } = req.body || {};
-    console.log(name, channel, prompt, csvFile, convertions);
+    // console.log(name, channel, prompt, csvFile, convertions);
     DefinedResponse = Array.isArray(convertions) ? convertions : (convertions ? [convertions] : []);
 
     let csvData;
@@ -73,20 +73,20 @@ app.post("/bulk-call", upload.single('csvFile'), async (req, res) => {
         	})
 			if (!response.ok) {
 				const text = await response.text().catch(() => "");
-				console.error("Downstream /call failed", response.status, text);
+				// console.error("Downstream /call failed", response.status, text);
 				continue;
 			}
         	const responseData = await response.json();
-        	console.log(responseData)
+        	// console.log(responseData)
         } catch (err) {
-			console.error("Fetch to /call failed", err);
+			// console.error("Fetch to /call failed", err);
 			continue;
 		}
         // const summary = generateSummary(responseData, convertions);
         // UserResponse.push({ phone });
     }
 
-    console.log(UserResponse);
+    // console.log(UserResponse);
 
     res.status(200).json({ message: "Campaign Done successfully" });
 })
@@ -99,7 +99,7 @@ app.post('/response', async (req, res) => {
     	console.log(UserResponse)
     	res.status(201).json({"message":"Added the user response"})
     } catch (err) {
-    	console.error("Failed to summarize response", err);
+    	// console.error("Failed to summarize response", err);
     	res.status(500).json({ error: "Failed to summarize response" });
     }
 })
