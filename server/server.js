@@ -4,34 +4,38 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 require("dotenv").config();
-const {services} = require('./services/services.js')
+const { services } = require('./services/services.js')
 const fs = require("fs");
 const multer = require('multer');
 const upload = multer();
 
-async function generateSummary(responseData, convertions) {
+async function generateSummary(conversations, convertions) {
 
-	let categoriesList = convertions;
-	let prompt = `Classify the user's response into ONE of the following categories: ${categoriesList}. Conversation:\n\n${responseData}`
-    console.log("prompt", prompt)
+    let categoriesList = convertions;
+    let responseData = conversations.map(c => `${c.role}: ${c.content}`).join("\n");
 
-	const createResponseParams = {
-		model: "gpt-4o-mini",
-		input: prompt
-	};
-	let processTimeStart = Date.now()
-	let response = await services.openai.responses.create(createResponseParams);
-	let processTime = Date.now() - processTimeStart
-	console.log("LLmProcessTime", processTime)
+    let prompt = `Classify the user's response into ONE of the following categories: ${categoriesList}. Conversation:\n\n${responseData}`;
 
-	let text = "";
-	if (response && typeof response.output_text === "string") {
-		text = response.output_text;
-	} else if (response && Array.isArray(response.output) && response.output[0]?.content?.[0]?.text) {
-		text = response.output[0].content[0].text;
-	}
+    console.log("prompt", prompt);
 
-	return (text || "Sorry I cannot conclude from the given conversation").trim().split(/\s+/);
+
+    const createResponseParams = {
+        model: "gpt-4o-mini",
+        input: prompt
+    };
+    let processTimeStart = Date.now()
+    let response = await services.openai.responses.create(createResponseParams);
+    let processTime = Date.now() - processTimeStart
+    console.log("LLmProcessTime", processTime)
+
+    let text = "";
+    if (response && typeof response.output_text === "string") {
+        text = response.output_text;
+    } else if (response && Array.isArray(response.output) && response.output[0]?.content?.[0]?.text) {
+        text = response.output[0].content[0].text;
+    }
+
+    return (text || "Sorry I cannot conclude from the given conversation").trim().split(/\s+/);
 }
 
 let UserResponse = [];
@@ -44,11 +48,11 @@ app.post("/bulk-call", upload.single('csvFile'), async (req, res) => {
 
     let csvData;
     if (req.file && req.file.buffer) {
-    	csvData = req.file.buffer.toString("utf8");
+        csvData = req.file.buffer.toString("utf8");
     } else if (csvFile) {
-    	csvData = fs.readFileSync(csvFile, "utf8");
+        csvData = fs.readFileSync(csvFile, "utf8");
     } else {
-    	return res.status(400).json({ error: "Provide csvFile path or upload csvFile as form-data file" });
+        return res.status(400).json({ error: "Provide csvFile path or upload csvFile as form-data file" });
     }
     const rows = csvData.trim().split(/\r?\n/);
     const headers = rows[0].split(",").map(h => h.trim());
@@ -65,19 +69,19 @@ app.post("/bulk-call", upload.single('csvFile'), async (req, res) => {
         const row = data[i];
         const { name, phone } = row;
         try {
-        	const response = await fetch(`${process.env.SERVER_URL}/call`, {
-            	method: "POST",
-            	headers: { "Content-Type": "application/json" },
-            	body: JSON.stringify({
-                name, prompt, to: phone, from: process.env.TWILIO_PHONE_NO, twilio_sid: process.env.TWILIO_ACCOUNT_SID, twilio_token: process.env.TWILIO_AUTH_TOKEN, recall_url
-            	})
-        	})
+            const response = await fetch(`${process.env.SERVER_URL}/call`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name, prompt, to: phone, from: process.env.TWILIO_PHONE_NO, twilio_sid: process.env.TWILIO_ACCOUNT_SID, twilio_token: process.env.TWILIO_AUTH_TOKEN, recall_url
+                })
+            })
             continue;
-        	// console.log(responseData)
+            // console.log(responseData)
         } catch (err) {
-			// console.error("Fetch to /call failed", err);
-			continue;
-		}
+            // console.error("Fetch to /call failed", err);
+            continue;
+        }
         // const summary = generateSummary(responseData, convertions);
         // UserResponse.push({ phone });
     }
@@ -89,15 +93,15 @@ app.post("/bulk-call", upload.single('csvFile'), async (req, res) => {
 
 app.post('/response', async (req, res) => {
     const { phone, conversation } = req.body;
-    console.log("conversations",conversation)
+    console.log("conversations", conversation)
     try {
-    	const summary = await generateSummary(conversation, DefinedResponse);
-    	UserResponse.push(`${phone} : ${summary}`);
-    	console.log(UserResponse)
-    	res.status(201).json({"message":"Added the user response"})
+        const summary = await generateSummary(conversation, DefinedResponse);
+        UserResponse.push(`${phone} : ${summary}`);
+        console.log(UserResponse)
+        res.status(201).json({ "message": "Added the user response" })
     } catch (err) {
-    	// console.error("Failed to summarize response", err);
-    	res.status(500).json({ error: "Failed to summarize response" });
+        // console.error("Failed to summarize response", err);
+        res.status(500).json({ error: "Failed to summarize response" });
     }
 })
 
