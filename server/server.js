@@ -16,7 +16,7 @@ async function generateSummary(conversations, convertions) {
 
     let prompt = `Classify the user's response into ONE of the following categories: ${categoriesList}. Conversation:\n\n${responseData}`;
 
-    console.log("prompt", prompt);
+    // console.log("prompt", prompt);
 
 
     const createResponseParams = {
@@ -93,7 +93,7 @@ app.post("/bulk-call", upload.single('csvFile'), async (req, res) => {
 
 app.post('/response', async (req, res) => {
     const { phone, conversation } = req.body;
-    console.log("conversations", conversation)
+    // console.log("conversations", conversation)
     try {
         const summary = await generateSummary(conversation, DefinedResponse);
         UserResponse.push(`${phone} : ${summary}`);
