@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }))
 require("dotenv").config();
 const {services} = require('./services/services.js')
 const fs = require("fs");
@@ -28,8 +29,6 @@ async function generateSummary(responseData, convertions) {
 
 	return (text || "Sorry I cannot conclude from the given conversation").trim().split(/\s+/)[0];
 }
-
-// console.log(process.env.OPEN_AI)
 
 let UserResponse = [];
 let DefinedResponse = [];
