@@ -11,8 +11,9 @@ const upload = multer();
 
 async function generateSummary(responseData, convertions) {
 
-	let categoriesList = Array.isArray(convertions) ? convertions.join(", ") : String(convertions ?? "");
+	let categoriesList = convertions;
 	let prompt = `Classify the user's response into ONE of the following categories: ${categoriesList}. Return only the single label. Conversation:\n\n${responseData}`
+    console.log("prompt", prompt)
 
 	const createResponseParams = {
 		model: "gpt-4o-mini",
@@ -93,6 +94,7 @@ app.post("/bulk-call", upload.single('csvFile'), async (req, res) => {
 
 app.post('/response', async (req, res) => {
     const { phone, conversations } = req.body;
+    console.log("conversations",conversations)
     try {
     	const summary = await generateSummary(conversations, DefinedResponse);
     	UserResponse.push(`${phone} : ${summary}`);
