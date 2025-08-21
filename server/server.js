@@ -1,7 +1,8 @@
 const express = require("express");
+const bodyParser = require('body-parser');
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }))
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 require("dotenv").config();
 const {services} = require('./services/services.js')
 const fs = require("fs");
@@ -36,7 +37,7 @@ let recall_url = process.env.recall_url;
 app.post("/bulk-call", async (req, res) => {
     const { name, channel, prompt, csvFile, convertions } = req.body;
     console.log(name, channel, prompt, csvFile, convertions);
-    DefinedResponse = [...DefinedResponse,...convertions]
+    DefinedResponse = convertions
 
     const csvData = fs.readFileSync(csvFile, "utf8");
     const rows = csvData.trim().split(/\r?\n/);
