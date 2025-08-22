@@ -49,6 +49,7 @@ async function generateSummary(conversations, convertions) {
 
 let UserResponse = [];
 let DefinedResponse = [];
+let CampaignContacts = [];
 let recall_url = process.env.recall_url;
 
 // Serve static files
@@ -83,6 +84,8 @@ app.post("/bulk-call", upload.single('csvFile'), async (req, res) => {
         }, {});
     });
     console.log(data);
+    // Track all contacts for this campaign so we can show non-responders too
+    CampaignContacts = Array.isArray(data) ? data.map(row => ({ name: row.name, phone: row.phone })) : [];
 
     for (let i = 0; i < data.length; i++) {
         const row = data[i];
@@ -126,7 +129,26 @@ app.post('/response', async (req, res) => {
 
 // Expose collected results for the frontend to poll
 app.get('/results', (req, res) => {
-    res.json({ results: UserResponse });
+    // Build a map of responses by phone for quick lookup
+    const phoneToResponse = new Map(
+        (UserResponse || []).filter(r => r && r.phone).map(r => [String(r.phone), r])
+    );
+
+    const merged = (CampaignContacts || []).map(contact => {
+        const key = String(contact.phone);
+        const found = phoneToResponse.get(key);
+        const summary = found ? found.summary : null;
+        const summaryText = Array.isArray(summary) ? summary.join(' ') : (summary ? String(summary) : '');
+        return {
+            name: contact.name || '',
+            phone: contact.phone || '',
+            responded: Boolean(found),
+            summary: summary,
+            summaryText: summaryText
+        };
+    });
+
+    res.json({ results: merged });
 });
 
 app.listen(5000, () => {

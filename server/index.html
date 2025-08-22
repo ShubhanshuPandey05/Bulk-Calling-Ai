@@ -120,7 +120,13 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Name
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Phone Number
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Category
@@ -265,19 +271,30 @@
             // Clear existing rows
             resultsTable.innerHTML = '';
 
-            results.forEach(({ phone, summary }) => {
-                const category = Array.isArray(summary) ? summary.join(' ') : String(summary || '');
-                const badgeClass = category.includes('Interested') && !category.includes('Not')
-                    ? 'bg-green-100 text-green-800'
-                    : category.includes('Not')
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800';
+            results.forEach(({ name, phone, responded, summaryText }) => {
+                const statusBadge = responded
+                    ? '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Responded</span>'
+                    : '<span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-700">Not responded</span>';
+
+                const category = responded && summaryText
+                    ? summaryText
+                    : '-';
+
+                const categoryClass = !responded ? 'bg-gray-200 text-gray-700' : (
+                    category.includes('Interested') && !category.includes('Not')
+                        ? 'bg-green-100 text-green-800'
+                        : category.includes('Not')
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                );
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${name || ''}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${phone || ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${statusBadge}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${badgeClass}">${category}</span>
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${categoryClass}">${category}</span>
                     </td>
                 `;
                 resultsTable.appendChild(row);
