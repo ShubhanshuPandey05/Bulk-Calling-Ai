@@ -1,6 +1,15 @@
 const express = require("express");
 const bodyParser = require('body-parser');
+const cors = require('cors');
+const path = require('path');
 const app = express();
+
+// Enable CORS for frontend
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 require("dotenv").config();
@@ -41,10 +50,20 @@ async function generateSummary(conversations, convertions) {
 let UserResponse = [];
 let DefinedResponse = [];
 let recall_url = process.env.recall_url;
+
+// Serve static files
+app.use(express.static(path.join(__dirname)));
+
+// Serve the main page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 app.post("/bulk-call", upload.single('csvFile'), async (req, res) => {
     const { name, channel, prompt, csvFile, convertions } = req.body || {};
     // console.log(name, channel, prompt, csvFile, convertions);
     DefinedResponse = Array.isArray(convertions) ? convertions : (convertions ? [convertions] : []);
+    // reset previous run results
+    UserResponse = [];
 
     let csvData;
     if (req.file && req.file.buffer) {
@@ -96,7 +115,7 @@ app.post('/response', async (req, res) => {
     // console.log("conversations", conversation)
     try {
         const summary = await generateSummary(conversation, DefinedResponse);
-        UserResponse.push(`${phone} : ${summary}`);
+        UserResponse.push({ phone, summary });
         console.log(UserResponse)
         res.status(201).json({ "message": "Added the user response" })
     } catch (err) {
@@ -104,6 +123,11 @@ app.post('/response', async (req, res) => {
         res.status(500).json({ error: "Failed to summarize response" });
     }
 })
+
+// Expose collected results for the frontend to poll
+app.get('/results', (req, res) => {
+    res.json({ results: UserResponse });
+});
 
 app.listen(5000, () => {
     console.log("Server is running on port 5000");

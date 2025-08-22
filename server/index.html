@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Calling AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .transition-colors {
+            transition: all 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">
+                Bulk Calling AI
+            </h1>
+            <p class="text-lg text-gray-600">
+                Upload your contact list and start your calling campaign
+            </p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-6">Campaign Configuration</h2>
+            
+            <form id="campaignForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Campaign Name *
+                        </label>
+                        <input
+                            type="text"
+                            id="campaignName"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter campaign name"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Channel
+                        </label>
+                        <input
+                            type="text"
+                            id="channel"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="e.g., Sales, Support"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Call Script/Prompt *
+                    </label>
+                    <textarea
+                        id="prompt"
+                        rows="4"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter the script or prompt for your calls..."
+                        required
+                    ></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Response Categories (comma-separated) *
+                    </label>
+                    <input
+                        type="text"
+                        id="convertions"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., Interested, Not Interested, Follow Up, No Answer"
+                        required
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Contact List (CSV) *
+                    </label>
+                    <input
+                        type="file"
+                        id="csvFile"
+                        accept=".csv"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                    />
+                    <div class="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                        <span>CSV should contain columns for name and phone number</span>
+                        <a 
+                            href="example_contacts.csv" 
+                            download
+                            class="text-blue-600 hover:text-blue-800 underline"
+                        >
+                            Download example
+                        </a>
+                    </div>
+                </div>
+
+                <button
+                    type="submit"
+                    id="submitBtn"
+                    class="w-full bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                    Start Campaign
+                </button>
+            </form>
+        </div>
+
+        <div id="resultsSection" class="bg-white rounded-lg shadow-lg p-6 hidden">
+            <h2 class="text-2xl font-semibold mb-6">Campaign Results</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Phone Number
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Category
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTable" class="bg-white divide-y divide-gray-200">
+                        <!-- Results will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-6 text-center flex items-center justify-center gap-3">
+                <button
+                    onclick="hideResults()"
+                    class="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                >
+                    Hide Results
+                </button>
+                <button
+                    id="stopPollingBtn"
+                    onclick="stopPolling()"
+                    class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors hidden"
+                >
+                    Stop Live Updates
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 class="text-lg font-semibold text-blue-900 mb-2">How it works:</h3>
+            <ol class="list-decimal list-inside space-y-1 text-blue-800">
+                <li>Upload a CSV file with your contact list (name and phone columns)</li>
+                <li>Configure your campaign settings and call script</li>
+                <li>Define response categories for AI classification</li>
+                <li>Start the campaign - calls will be made automatically</li>
+                <li>View results once all calls are completed</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let isLoading = false;
+        let pollingIntervalId = null;
+
+        document.getElementById('campaignForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (isLoading) return;
+            
+            const formData = new FormData();
+            const csvFile = document.getElementById('csvFile').files[0];
+            const name = document.getElementById('campaignName').value;
+            const channel = document.getElementById('channel').value;
+            const prompt = document.getElementById('prompt').value;
+            const convertions = document.getElementById('convertions').value;
+
+            if (!csvFile) {
+                alert('Please select a CSV file');
+                return;
+            }
+
+            formData.append('csvFile', csvFile);
+            formData.append('name', name);
+            formData.append('channel', channel);
+            formData.append('prompt', prompt);
+            formData.append('convertions', convertions);
+
+            setLoading(true);
+
+            try {
+                // Start campaign
+                const response = await fetch('/bulk-call', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    alert('Failed to start campaign');
+                    return;
+                }
+
+                // Start live polling for results
+                startPolling();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error starting campaign');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function setLoading(loading) {
+            isLoading = loading;
+            const submitBtn = document.getElementById('submitBtn');
+            if (loading) {
+                submitBtn.textContent = 'Starting Campaign...';
+                submitBtn.disabled = true;
+            } else {
+                submitBtn.textContent = 'Start Campaign';
+                submitBtn.disabled = false;
+            }
+        }
+
+        function startPolling() {
+            const resultsSection = document.getElementById('resultsSection');
+            const stopBtn = document.getElementById('stopPollingBtn');
+            resultsSection.classList.remove('hidden');
+            stopBtn.classList.remove('hidden');
+
+            // Clear any existing polling
+            stopPolling();
+
+            // Immediately fetch once, then every 2s
+            fetchAndRenderResults();
+            pollingIntervalId = setInterval(fetchAndRenderResults, 2000);
+        }
+
+        function stopPolling() {
+            const stopBtn = document.getElementById('stopPollingBtn');
+            if (pollingIntervalId) {
+                clearInterval(pollingIntervalId);
+                pollingIntervalId = null;
+            }
+            stopBtn.classList.add('hidden');
+        }
+
+        async function fetchAndRenderResults() {
+            try {
+                const res = await fetch('/results', { cache: 'no-store' });
+                if (!res.ok) return;
+                const data = await res.json();
+                const list = Array.isArray(data.results) ? data.results : [];
+                renderResults(list);
+            } catch (e) {
+                console.error('Failed to fetch results', e);
+            }
+        }
+
+        function renderResults(results) {
+            const resultsTable = document.getElementById('resultsTable');
+            // Clear existing rows
+            resultsTable.innerHTML = '';
+
+            results.forEach(({ phone, summary }) => {
+                const category = Array.isArray(summary) ? summary.join(' ') : String(summary || '');
+                const badgeClass = category.includes('Interested') && !category.includes('Not')
+                    ? 'bg-green-100 text-green-800'
+                    : category.includes('Not')
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-yellow-100 text-yellow-800';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${phone || ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${badgeClass}">${category}</span>
+                    </td>
+                `;
+                resultsTable.appendChild(row);
+            });
+        }
+
+        function hideResults() {
+            document.getElementById('resultsSection').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
